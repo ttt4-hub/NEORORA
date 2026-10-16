@@ -1,3 +1,9 @@
+# Neorora: patient data and secrets, never push
+data/
+*.csv
+*.xlsx
+*.json
+*.pem
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
