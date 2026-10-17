@@ -20,18 +20,19 @@
     <label class="consent"><input type="checkbox" id="consent"><span>I agree to have the posts I upload processed for this check.</span></label>
     <button class="primary upload-primary" id="upload-button" disabled><span data-icon="upload"></span>Upload posts</button>
     <input type="file" id="posts-file" accept=".csv,text/csv" hidden aria-label="Choose posts CSV file">
-    <p class="upload-help">Upload your posts as a CSV with patient_id, date and text columns. Include original dates and times, for example 2026-07-15 14:30.</p>
+    <p class="caregiver-note">A family member or caregiver can help you upload your posts.</p>
+    <details class="upload-instructions"><summary>File requirements</summary><p>Choose a CSV with patient_id, date and text columns. Include at least five posts with their original dates and times, for example 2026-07-15 14:30.</p></details>
    </div>
-   <article id="upload-receipt" class="panel upload-receipt" hidden aria-live="polite"></article>
-   <div id="upload-feedback" class="upload-feedback" aria-live="polite"></div>
+   <div id="upload-feedback" class="upload-feedback" role="status" aria-live="polite"></div>
    <div id="senior-result" aria-live="polite"></div>
+   <article id="upload-receipt" class="panel upload-receipt" hidden aria-live="polite"></article>
   </section>
   <section class="page" id="page-clinician" aria-label="Clinician page" hidden>
    <div class="review-heading"><h1>Patient review</h1><p>Review one patient’s writing history and changes over time.</p></div>
    <div class="clinician-toolbar"><div class="pill"><span data-icon="flask"></span><span id="results-source">Patient records</span></div><label class="patient-picker">Patient:<select id="patient-select"><option value="">Select a patient</option></select></label></div>
 
    <div id="assessment-section" hidden><div class="clinical-grid">
-    <article class="panel risk-panel"><h2>Screening assessment</h2><div class="risk-box" id="risk-box"><div class="risk-name"><span class="status-dot red" aria-hidden="true"></span><span id="risk-level">Unavailable</span></div><div class="risk-score"><span id="score-label">Model score:</span> <strong id="risk-score">—</strong></div></div></article>
+    <article class="panel risk-panel"><h2>Screening level</h2><div class="risk-box" id="risk-box"><div class="risk-name"><span class="status-dot red" aria-hidden="true"></span><span id="risk-level">Unavailable</span></div><div class="risk-score"><span id="score-label">Model score:</span> <strong id="risk-score">—</strong></div></div></article>
     <article class="panel chart-panel"><h2 id="trend-title">Assessment summary</h2><div id="trend-chart"></div></article>
    </div>
    <div class="clinical-bottom">
@@ -47,7 +48,7 @@
    <div class="metric-grid" id="metric-grid"></div>
    <article class="panel phase1-panel"><h2>Test performance</h2><p class="helper">Linear SVM · 15 selected features · Classification threshold 0.67. Target: Normal versus MCI/Dementia.</p><img class="evaluation-image" id="test-evaluation" alt="Final test confusion matrix and ROC curve"><p class="helper">19 true positives, 11 false negatives, 7 true negatives and 5 false positives.</p></article>
    <article class="panel phase1-panel"><h2>Features used by the model</h2><img class="evaluation-image" id="feature-evaluation" alt="Permutation importance of the final model’s features"><p class="helper">Permutation importance was measured on the training patients. It describes the model overall, not one patient's explanation.</p></article>
-   <article class="panel phase1-panel"><h2>Available patient assessments</h2><p id="table-source" class="helper"></p><table class="results-table"><thead><tr><th>Patient</th><th>Predicted class</th><th>Model score / band</th><th>Record</th></tr></thead><tbody id="prediction-table"></tbody></table></article>
+   <article class="panel phase1-panel"><h2>Available patient assessments</h2><p id="table-source" class="helper"></p><div class="assessment-table-scroll" tabindex="0" aria-label="Patient assessments table"><table class="results-table"><thead><tr><th>Patient</th><th>Predicted class</th><th>Model score / band</th><th>Record</th></tr></thead><tbody id="prediction-table"></tbody></table></div></article>
    <p class="demo-note">Results are based on 42 held-out patients. The small test set limits confidence in these estimates. Score bands do not describe disease severity.</p>
   </section>
   <section class="page" id="page-about" aria-label="About and Privacy page" hidden>

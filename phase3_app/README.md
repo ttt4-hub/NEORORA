@@ -36,3 +36,12 @@ All 42 saved risk scores and levels reproduce exactly from the provided saved es
 
 ## Credits
 Interface and integration prepared with ChatGPT/Codex. Dataset preparation, feature design, training and evaluation are the team's supplied work. The original notebooks and model are unchanged.
+
+
+## Interface refinement
+Compact screening cards, bounded research charts, scrollable results table, expandable file requirements and score thresholds. The primary screening label is Low, Medium or High. Original metrics, model and patient records are unchanged. An entirely fictional timestamped CSV is provided in sample_files for a complete upload-to-review test. No Arabic instruction document is included.
+
+
+## Upload response handling
+The interface correlates upload requests with the backend's completed-event ID, resets the file chooser after a response, and ends an unanswered wait after 30 seconds with visible restart guidance. This is a connection timeout, not a fake prediction. Successful responses still display the actual model output.
+Verified in a real headless browser with Streamlit: upload -> screening summary; reviewed the rendered result. If an existing browser session is stuck, stop the old Streamlit processes and restart from this folder.

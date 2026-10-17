@@ -16,14 +16,31 @@ function icon(name){return `<svg class="icon" viewBox="0 0 24 24" aria-hidden="t
 document.querySelectorAll('[data-icon]').forEach(el=>el.outerHTML=icon(el.dataset.icon));
 $('brand-mark').src=DATA.assets.mark;$('full-logo').src=DATA.assets.logo;
 document.documentElement.style.setProperty('--landscape',`url("${DATA.assets.landscape}")`);
-let bridge=false,currentPage='senior',receivedBackend=false;
+let bridge=false,currentPage='senior',receivedBackend=false,pendingUploadId=null,uploadTimer=null;
 const pages={senior:'Senior',clinician:'Clinician',researcher:'Researcher',about:'About & Privacy'};
 function post(type,extra={}){if(window.parent!==window)window.parent.postMessage({isStreamlitMessage:true,type,...extra},'*')}
 function size(){if(bridge)post('streamlit:setFrameHeight',{height:Math.ceil(document.body.scrollHeight)})}
+function finishUploadWait(){
+ if(uploadTimer)clearTimeout(uploadTimer);uploadTimer=null;pendingUploadId=null;
+ $('upload-button').disabled=!$('consent').checked;$('posts-file').value='';
+}
 function send(action,extra={}){
  if(!bridge)return false;
- post('streamlit:setComponentValue',{value:{action,page:currentPage,selected_id:$('patient-select').value,event_id:Date.now()+'-'+Math.random(),...extra},dataType:'json'});return true;
+ const eventId=Date.now()+'-'+Math.random();
+ if(action==='upload_dataset'){
+  if(uploadTimer)clearTimeout(uploadTimer);
+  pendingUploadId=eventId;
+  uploadTimer=setTimeout(()=>{
+   if(pendingUploadId!==eventId)return;
+   finishUploadWait();
+   $('upload-feedback').textContent='The screening response has not arrived. Refresh this page and try again. If it continues, restart the app and check the terminal.';
+   size();
+  },30000);
+ }
+ post('streamlit:setComponentValue',{value:{action,page:currentPage,selected_id:$('patient-select').value,event_id:eventId,...extra},dataType:'json'});
+ return true;
 }
+
 function navigate(page,notify=true){
  if(!(page in pages))page='senior';currentPage=page;
  document.querySelectorAll('main>.page').forEach(el=>el.hidden=el.id!=='page-'+page);
@@ -48,8 +65,9 @@ function validatePredictions(parsed){
 }
 async function upload(file,type,senior=false){
  if(!file)return;const feedback=$('upload-feedback');
+ if(senior){DATA.senior_result=null;$('senior-result').replaceChildren();$('upload-receipt').hidden=true;$('upload-button').disabled=true;feedback.textContent='Reading your posts…';}
  try{
-  if(file.size>(bridge&&type==='dataset'?50:5)*1024*1024)throw Error('CSV exceeds the upload limit.');const text=await file.text();if(bridge){if(senior&&!$('consent').checked)return;send(type==='predictions'?'upload_predictions':'upload_dataset',{csv:text,filename:file.name,consent:senior?$('consent').checked:false});return;}const parsed=parseCSV(text);
+  if(file.size>(bridge&&type==='dataset'?50:5)*1024*1024)throw Error('CSV exceeds the upload limit.');const text=await file.text();if(bridge){if(senior&&!$('consent').checked)return;if(senior)feedback.textContent='Analysing your posts…';send(type==='predictions'?'upload_predictions':'upload_dataset',{csv:text,filename:file.name,consent:senior?$('consent').checked:false});return;}const parsed=parseCSV(text);
   if(senior){const idKey=parsed.headers.includes('patient_id')?'patient_id':'patient';if(![idKey,'date','text'].every(k=>parsed.headers.includes(k)))throw Error('Use patient_id, date and text columns.');const ids=new Set(parsed.rows.map(r=>r[idKey].trim()));if(ids.size!==1||ids.has(''))throw Error('Please upload posts for one person only.');if(parsed.rows.some(r=>!r.text.trim()||!/^\d{4}-\d{2}-\d{2}(?:[ T]\d{2}:\d{2}(?::\d{2})?)?$/.test(r.date)||!Number.isFinite(Date.parse(r.date))||new Date(r.date.length===10?r.date+'T00:00:00Z':r.date.replace(' ','T')+'Z').toISOString().slice(0,10)!==r.date.slice(0,10)))throw Error('Each post needs text and a valid date and time.');const dates=parsed.rows.map(r=>r.date).sort();DATA.upload_summary={posts:parsed.rows.length,start:dates[0],end:dates.at(-1),name:file.name};}
   if(senior&&!$('consent').checked)return;
   if(type==='predictions')validatePredictions(parsed);
@@ -58,7 +76,7 @@ async function upload(file,type,senior=false){
   if(type==='dataset'){DATA.dataset={name:file.name,rows:parsed.rows.length,columns:parsed.headers,preview:parsed.rows.slice(0,8),location:'Browser preview only — run Streamlit for Python processing'};DATA.notice='Your file has been received. An assessment is not available yet.';if(senior)$('upload-feedback').textContent=DATA.notice}
   else{DATA.results=validatePredictions(parsed);DATA.isPlaceholder=false;DATA.selectedId=DATA.results[0].patient_id;DATA.pdfs={};DATA.notice='Predictions imported in the browser. Open Streamlit to generate a PDF for imported results.'}
   renderData();
- }catch(e){feedback.textContent='Upload error: '+e.message;size()}
+ }catch(e){finishUploadWait();feedback.textContent='Upload error: '+e.message;size()}finally{if(!bridge)$('upload-button').disabled=!$('consent').checked;}
 }
 $('consent').addEventListener('change',()=>{$('upload-button').disabled=!$('consent').checked;if(!$('consent').checked)$('upload-feedback').replaceChildren()});
 $('upload-button').addEventListener('click',()=>{if($('consent').checked)$('posts-file').click()});
@@ -75,9 +93,9 @@ function updateClinician(){
  $('assessment-section').hidden=false;
  const row=rows.at(-1),state=row.risk_level.toLowerCase(),score=row.risk_score/100;
  $('risk-box').className='risk-box '+(state==='medium'?'moderate':state);
- $('risk-box').querySelector('.status-dot').className='status-dot '+(state==='high'?'red':state==='medium'?'yellow':'');$('risk-level').textContent=row.risk_level+' model score band';$('risk-score').textContent=score.toFixed(3);$('score-label').textContent='Model score (0–1):';
+ $('risk-box').querySelector('.status-dot').className='status-dot '+(state==='high'?'red':state==='medium'?'yellow':'');$('risk-level').textContent=row.risk_level;$('risk-score').textContent=score.toFixed(3);$('score-label').textContent='Model score (0–1):';
  $('trend-title').textContent='Classification';
- $('trend-chart').innerHTML=`<h3>${row.predicted_label===1?'1 · MCI/Dementia class':'0 · Normal class'}</h3><p class="helper">Model classification, not a diagnosis.</p><div class="score-meter"><span style="width:${row.risk_score}%"></span></div><p class="helper">Decision threshold: 0.67. Score bands: Low below 0.50; Medium 0.50 to below 0.67; High 0.67 and above.</p><p class="helper">Assessment based on the available writing history.</p>`;
+ $('trend-chart').innerHTML=`<h3>${row.predicted_label===1?'1 · MCI/Dementia class':'0 · Normal class'}</h3><p class="helper">Model classification, not a diagnosis.</p><div class="score-meter"><span style="width:${row.risk_score}%"></span></div><p class="helper">Assessment based on the available writing history.</p><details class="score-details"><summary>How scores are classified</summary><p class="helper">Threshold: 0.67. Low: below 0.50; Medium: 0.50 to below 0.67; High: 0.67 and above. Bands describe the model score, not disease severity.</p></details>`;
  $('reasons').innerHTML=[row.reason_1,row.reason_2,row.reason_3].map((r,i)=>`<li><span class="reason-number">${i+1}</span>${esc(r)}</li>`).join('');
  $('alert-banner').className='alert-banner '+(state==='high'?'':state==='medium'?'moderate':'low');$('alert-text').textContent=row.predicted_label===1?'Review the flagged screening result':'Review alongside the patient’s history';
  $('results-source').textContent='Patient assessments';
@@ -98,7 +116,7 @@ function renderData(){
 }
 window.addEventListener('message',event=>{
  if(event.source!==window.parent||event.data?.type!=='streamlit:render')return;
- bridge=true;DATA=event.data.args.payload;renderData();if(!receivedBackend){navigate(DATA.activePage,false);receivedBackend=true}size();
+ bridge=true;DATA=event.data.args.payload;if(pendingUploadId&&DATA.completed_event_id===pendingUploadId)finishUploadWait();$('upload-button').disabled=Boolean(pendingUploadId)||!$('consent').checked;renderData();if(!receivedBackend){navigate(DATA.activePage,false);receivedBackend=true}size();
 });
 new ResizeObserver(()=>size()).observe(document.body);
 renderData();navigate(location.hash.slice(1)||DATA.activePage,false);
@@ -130,9 +148,9 @@ function renderPhase1Patient(pid){
  if(p.change_supported===false)html+='<div class="phase1-empty">More original posts are needed for an earlier-to-later comparison.</div>';
  else if(keys.some(k=>numeric(f[k])))html+='<div class="change-grid">'+keys.filter(k=>numeric(f[k])).map(k=>{const v=f[k],direction=v>0?'Increased':v<0?'Decreased':'No change';return `<article class="change-card"><span>${esc(featureName(k.replace('_change','')))}</span><strong>${direction}${v===0?'':` by ${esc(fmt(Math.abs(v),4))}`}</strong><small>Difference between the two halves of the writing history</small></article>`}).join('')+'</div>';
  else html+='<div class="phase1-empty">An earlier-to-later writing comparison is not available in this record.</div>';
- html+='</section><section class="review-section"><h2>Posting activity</h2>';
- html+=months.length?monthlySVG(months):'<p class="helper">Dated posting history is not available. Writing changes above compare earlier and later groups of posts rather than calendar months.</p>';
- html+='</section><section class="assessment-status"><h3>Assessment status</h3><p>No model assessment is available for this patient. The writing measurements below are available for review.</p></section>';
+ html+='</section>';
+ if(months.length)html+='<section class="review-section"><h2>Posting activity</h2>'+monthlySVG(months)+'</section>';
+ html+='<section class="assessment-status"><h3>Assessment status</h3><p>No model assessment is available for this patient. The writing measurements below are available for review.</p></section>';
  const descriptions={mattr:'Variety of vocabulary, measured over moving windows of text.',avg_words_per_post:'Average number of words in a post.',avg_sentence_length:'Average number of words in a sentence.',repetition_rate:'Frequency of repeated two-word combinations.',filler_ratio:'Proportion of words identified as fillers.',own_posts:'Number of posts identified as original writing.'};
  html+='<details class="measurement-details"><summary>View detailed writing measurements</summary><div class="phase1-table"><table class="post-preview"><thead><tr><th>Measurement</th><th>Value</th><th>Meaning</th></tr></thead><tbody>'+Object.entries(descriptions).map(([k,d])=>`<tr><td>${esc(featureName(k))}</td><td>${esc(fmt(f[k]))}</td><td>${esc(d)}</td></tr>`).join('')+'</tbody></table></div></details>';
  $('phase1-patient-details').innerHTML=html;

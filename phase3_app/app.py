@@ -30,6 +30,7 @@ payload=build_payload(results,summary,s.active_page,s.selected_id,s.notice,conne
 payload['phase1']=build_phase1(s.phase1_frames)
 payload['upload_summary']=s.get('upload_summary')
 payload['senior_result']=s.get('senior_result')
+payload['completed_event_id']=s.get('last_event')
 if s.get('submitted_prediction'):
     payload['results']=[*payload['results'],s.submitted_prediction]
 if s.get('submitted_patient'):

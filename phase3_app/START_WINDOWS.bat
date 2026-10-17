@@ -1,7 +1,7 @@
 @echo off
 setlocal
 cd /d "%~dp0"
-echo Starting NEORORA practice demo...
+echo Starting NEORORA...
 if exist .venv\Scripts\python.exe goto install
 where py >nul 2>nul
 if errorlevel 1 goto usepython
