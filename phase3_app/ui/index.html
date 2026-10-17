@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>NEORORA · Cognitive Compass</title><style>__STYLES__</style></head>
+<body>
+<div class="app-window">
+ <div class="windowbar" aria-hidden="true"><span></span><span></span><span></span></div>
+ <header class="topbar">
+  <a href="#senior" class="brand" aria-label="NEORORA home"><img id="brand-mark" alt="NEORORA brain and compass logo"><div><div class="brand-word">NEORORA</div><div class="brand-sub">Cognitive Compass</div></div></a>
+  <nav class="navigation" aria-label="Main navigation">
+   <button class="nav-button active" data-page="senior" aria-current="page">Senior</button>
+   <button class="nav-button" data-page="clinician">Clinician</button>
+   <button class="nav-button" data-page="researcher">Researcher</button>
+   <button class="nav-button" data-page="about">About &amp; Privacy</button>
+  </nav>
+ </header>
+ <main>
+  <section class="page" id="page-senior" aria-label="Senior page">
+   <div class="senior-hero">
+    <h1>Welcome to NEORORA</h1>
+    <p class="senior-sub">Share your social media posts to help us understand changes in your writing over time.</p>
+    <label class="consent"><input type="checkbox" id="consent"><span>I agree to have the posts I upload processed for this check.</span></label>
+    <button class="primary upload-primary" id="upload-button" disabled><span data-icon="upload"></span>Upload posts</button>
+    <input type="file" id="posts-file" accept=".csv,text/csv" hidden aria-label="Choose posts CSV file">
+    <p class="upload-help">Upload your posts as a CSV with patient_id, date and text columns. Include original dates and times, for example 2026-07-15 14:30.</p>
+   </div>
+   <article id="upload-receipt" class="panel upload-receipt" hidden aria-live="polite"></article>
+   <div id="upload-feedback" class="upload-feedback" aria-live="polite"></div>
+   <div id="senior-result" aria-live="polite"></div>
+  </section>
+  <section class="page" id="page-clinician" aria-label="Clinician page" hidden>
+   <div class="review-heading"><h1>Patient review</h1><p>Review one patient’s writing history and changes over time.</p></div>
+   <div class="clinician-toolbar"><div class="pill"><span data-icon="flask"></span><span id="results-source">Patient records</span></div><label class="patient-picker">Patient:<select id="patient-select"><option value="">Select a patient</option></select></label></div>
+
+   <div id="assessment-section" hidden><div class="clinical-grid">
+    <article class="panel risk-panel"><h2>Screening assessment</h2><div class="risk-box" id="risk-box"><div class="risk-name"><span class="status-dot red" aria-hidden="true"></span><span id="risk-level">Unavailable</span></div><div class="risk-score"><span id="score-label">Model score:</span> <strong id="risk-score">—</strong></div></div></article>
+    <article class="panel chart-panel"><h2 id="trend-title">Assessment summary</h2><div id="trend-chart"></div></article>
+   </div>
+   <div class="clinical-bottom">
+    <article class="panel reasons-panel"><h2>Assessment explanation</h2><ol class="reason-list" id="reasons"></ol></article>
+    <div class="clinical-actions"><div class="alert-banner" id="alert-banner" role="status"><span data-icon="alert"></span><span id="alert-text">Review screening result</span></div><button class="primary" id="download-pdf" hidden><span data-icon="download"></span>Download PDF report</button></div>
+   </div>
+   </div>
+   <article class="panel phase1-panel" id="phase1-clinical"><h2>Patient summary</h2><div id="phase1-patient-details"></div></article>
+   <p class="demo-note"><span id="clinical-note">Screening support, not a diagnosis.</span></p>
+  </section>
+  <section class="page" id="page-researcher" aria-label="Researcher page" hidden>
+   <div class="review-heading"><h1>Research overview</h1><p>Final model evaluation across 42 held-out patients.</p></div>
+   <div class="metric-grid" id="metric-grid"></div>
+   <article class="panel phase1-panel"><h2>Test performance</h2><p class="helper">Linear SVM · 15 selected features · Classification threshold 0.67. Target: Normal versus MCI/Dementia.</p><img class="evaluation-image" id="test-evaluation" alt="Final test confusion matrix and ROC curve"><p class="helper">19 true positives, 11 false negatives, 7 true negatives and 5 false positives.</p></article>
+   <article class="panel phase1-panel"><h2>Features used by the model</h2><img class="evaluation-image" id="feature-evaluation" alt="Permutation importance of the final model’s features"><p class="helper">Permutation importance was measured on the training patients. It describes the model overall, not one patient's explanation.</p></article>
+   <article class="panel phase1-panel"><h2>Available patient assessments</h2><p id="table-source" class="helper"></p><table class="results-table"><thead><tr><th>Patient</th><th>Predicted class</th><th>Model score / band</th><th>Record</th></tr></thead><tbody id="prediction-table"></tbody></table></article>
+   <p class="demo-note">Results are based on 42 held-out patients. The small test set limits confidence in these estimates. Score bands do not describe disease severity.</p>
+  </section>
+  <section class="page" id="page-about" aria-label="About and Privacy page" hidden>
+   <div class="about-hero"><img id="full-logo" class="about-logo" alt="NEORORA logo"><h1>About &amp; Privacy</h1><p>NEORORA helps reviewers notice changes in posts over time.</p><div class="screening-banner">Screening tool, not a diagnosis.</div></div>
+   <article class="panel privacy-panel"><div class="privacy-title"><span data-icon="shield"></span>Protecting patient identity</div><p class="privacy-statement">Before analysis, personal names in the research dataset were removed and replaced with coded patient IDs on a local machine. Identifiable data was not uploaded to Google Drive or other cloud storage during this preparation, helping protect patient privacy.</p><ul class="privacy-list"><li><span data-icon="people"></span><span>Use only posts you have permission to share.</span></li><li><span data-icon="person"></span><span>Patient records use coded identifiers instead of names.</span></li><li><span data-icon="document"></span><span>Automated masking may miss identifying information. Review files before sharing.</span></li></ul></article>
+   <p class="about-footnote">Uploads are processed in the current session and are not saved to a database. Account-based access controls are not available in this prototype. Results support review by a clinician and do not provide a diagnosis.</p>
+  </section>
+ </main>
+</div><footer class="footer">NEORORA · Cognitive Compass &nbsp; | &nbsp; Understand Today, Support Tomorrow</footer>
+<script id="app-data" type="application/json">__DATA_JSON__</script><script>__SCRIPT__</script>
+</body></html>

@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.env
+.streamlit/secrets.toml
+/data/*.csv
+!/data/dataset_template.csv
+!/data/predictions_template.csv
+/uploads/
+*.log
+
+/data/phase1/
